@@ -20,16 +20,37 @@
             }
 
             canvas {
+                width: auto;
+                height: auto;
             }
         </style>
     </head>
     <body>
         <script src="pixi.min.js" type="text/javascript" charset="utf-8"></script>
-        <script type="text/javascript" charset="utf-8"> var Game = {}; </script>
+        <script type="text/javascript" charset="utf-8"> 
+            window.extend = function() {
+                for (var i = 1; i < arguments.length; i++)
+                for (var j in arguments[i])
+                    arguments[0][j] = arguments[i][j];
+                return arguments[0];
+            };
+
+            window.random = function(min, max) {
+                return Math.random() * (max - min) + min;
+            };
+
+            var Game = {}; 
+        </script>
+
         <script src="vec.js" type="text/javascript" charset="utf-8"></script>
         <script src="entity.js" type="text/javascript" charset="utf-8"></script>
+
         <script src="bird.js" type="text/javascript" charset="utf-8"></script>
+
+        <script src="main.js" type="text/javascript" charset="utf-8"></script>
+        <!-- 
         <script src="food.js" type="text/javascript" charset="utf-8"></script>
         <script src="main.js" type="text/javascript" charset="utf-8"></script>
+        -->
     </body>
 </html>

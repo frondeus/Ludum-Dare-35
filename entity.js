@@ -1,72 +1,84 @@
 (function() {
-    window.extend = function() {
-        for (var i = 1; i < arguments.length; i++)
-            for (var j in arguments[i])
-                arguments[0][j] = arguments[i][j];
-        return arguments[0];
-    };
-    window.random = function(min, max) {
-        return Math.random() * (max - min) + min;
-    };
-
-    var defaultGfx = function(color, size) {
-        var gfx = new PIXI.Graphics();
-        gfx.beginFill(color);
-        gfx.drawCircle(0, 0, size);
-        gfx.endFill();
-        return gfx;
-    };
-
     var System = function() {
         this.entities = [];
     };
 
+    
     System.prototype = {
-        is: function(e) {
-            return(this.entities.indexOf(e) > -1);
-        },
-
         add: function(e) {
-            if(this.entities.indexOf(e) < 0)
-                this.entities.push(e);
+            this.entities.push(e);
         },
 
         remove: function(e) {
-            var i = this.entities.indexOf(e);
-            if(i > -1)
-                this.entities.splice(i, 1);
+            if(e > -1) this.entities.splice(e, 1);
         },
-
-        clean: function(e) {
+        
+        clean: function() {
             for(var e in this.entities) {
-                if(this.entities[e].removed) this.remove(this.entities[e]);
+                if(this.entities[e]._dirty) {
+                    this.remove(e);
+                }
             }
         }
-
     };
 
-    var SimpleMovement = new System();
+    var Factory = function(Cons) {
+        this.Cons = Cons;
+        this.queue = [];
+        this.size = 16;
+    };
 
-    var Entity = function(args) {
+    Factory.prototype = {
+        create: function(args) {
+            if(this.queue.length <= 0) {
+                for(var i = 0; i < this.size; i++)
+                this.queue.push(new Entity());
+                this.size *= this.size;
+            }
+
+            var e = this.queue.shift();
+            this.Cons(e, args);
+            e.factory = this;
+            return e;
+        }
+    };
+
+    var State = function(){
+        this.pos = new Game.Vec(Game.Mid);
+        this.size = 30;
+        this.vel = new Game.Vec({x: 0, y: 0});
+        this.rot = 0;
+    };
+
+    var defaultGfx = function() {
+        var gfx = new PIXI.Graphics();
+        gfx.beginFill(0xFFFFFF);
+        gfx.drawCircle(0, 0, 0.5);
+        gfx.endFill();
+        return gfx;
+    };
+
+    var Entity = function(Cons, args) {
         extend(this, {
-            pos: new Game.Vec(random(100, Game.Width - 100), random(100, Game.Height - 100)),
-            size: 30,
-            gfx: defaultGfx(0xFFFFFF, 30),
-            rotation: 0
+            state: new State(),
+            old: new State(),
+            //gfx: defaultGfx(),
+            gfx: new PIXI.Sprite(Game.resources.bird.texture),
+            _dirty: false
         }, args);
 
-        this._pos = new Game.Vec(this.pos.x, this.pos.y);
-        SimpleMovement.add(this);
+        //this.gfx.tint = 0xFFFFFF;
     };
 
     Entity.prototype.remove = function() {
-        this.removed = true;
-        Game.removed.push(this);
+        this._dirty = true;
     };
 
-    Game.defaultGfx = defaultGfx;
     Game.System = System;
+    Game.State = State;
     Game.Entity = Entity;
-    Game.removed = [];
-    Game.systems = [SimpleMovement];
+    Game.Factory = Factory;
+    Game.systems = [];
+
+
 })();

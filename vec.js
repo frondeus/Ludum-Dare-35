@@ -1,10 +1,17 @@
 (function() {
-    var Vec = function(x, y) {
-        this.x = x;
-        this.y = y;
+    var Vec = function(v) {
+        if(v === undefined) {
+            v = {x: 0, y: 0};
+        }
+        this.x = v.x;
+        this.y = v.y;
     };
 
     Vec.prototype = {
+        copy: function() {
+            return new Vec(this);
+        },
+
         add: function(other) {
             this.x += other.x;
             this.y += other.y;
@@ -51,7 +58,7 @@
             var dX = Math.abs(this.x - other.x);
             var dY = Math.abs(this.y - other.y);
 
-            //return Math.sqrt(dX * dX + dY * dY);
+            return Math.sqrt(dX * dX + dY * dY);
 
             return Math.sqrt(
                 Math.min(dX, Game.Width - dX) * Math.min(dX, Game.Width - dX)
@@ -74,6 +81,10 @@
             return this;
         }
 
+    };
+
+    window.randomVec = function() {
+        return new Vec({x : random(100, Game.Width - 100), y: random(100, Game.Height - 100)});
     };
 
     Game.Vec = Vec;
