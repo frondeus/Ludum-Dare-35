@@ -46,16 +46,13 @@
     };
 
     var SimpleMovement = new System();
-    SimpleMovement.step = function(e) {
-        e.gfx.position.x = e.pos.x;
-        e.gfx.position.y = e.pos.y;
-    };
 
     var Entity = function(args) {
         extend(this, {
             pos: new Game.Vec(random(100, Game.Width - 100), random(100, Game.Height - 100)),
             size: 30,
             gfx: defaultGfx(0xFFFFFF, 30),
+            rotation: 0
         }, args);
 
         this._pos = new Game.Vec(this.pos.x, this.pos.y);

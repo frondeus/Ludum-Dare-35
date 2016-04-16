@@ -3,29 +3,30 @@
 
     var Birds = new Game.System();
     extend(Birds, {
-        SeparationWeight: 3,
+        SeparationWeight: 5,
         AlignWeight: 1,
         CohesionWeight: 1,
-        ControllWeight: 0.1,
+        ControllWeight: 5.5,
 
         MaxSpeed: 2,
-        MaxForce: 0.5,
+        MaxForce: 0.05,
 
-        NeighbourRadius: 50,
-        ControllRadius:  2000,
+        NeighbourRadius: 100,
+        ControllRadius: 400,
         DesiredSeparation: 10,
 
         step: function( e ,dt ) {
-            var acc = this.flock( e );
+            var acc = this.flock( e ).div(this.SeparationWeight + this.AlignWeight + this.CohesionWeight + this.ControllWeight);
             acc.mul(dt * 100);
             e.vel.add(acc);
             e.vel.mul(dt * 100);
             e.vel.limit(e.MaxSpeed);
 
             e.pos.add(e.vel).warp(Game.Width, Game.Height);
-             
-            e._pos.x = e.pos.x;
-            e._pos.y = e.pos.y;
+
+            var rot = Math.atan2(e.vel.y, e.vel.x) ;
+            e.rotation = rot;
+
             e._vel.x = e.vel.x;
             e._vel.y = e.vel.y;
         },
@@ -71,18 +72,15 @@
                 cohere = this.steer(e, cohere.div(count));
                 align.div(count);
             }
-            align.limit(this.MaxForce);
+            align.limit(e.MaxForce);
 
             //--- Controll ---
             var controll = new Game.Vec(0, 0);
             var dist = e._pos.dist(Game.mouse);
-            if(dist > 0 && dist < this.ControllRadius) {
-                var d = new Game.Vec(Game.mouse.x, Game.mouse.y);
-                d.sub(e._pos);
-                d.normalize();
-                controll = d;
+            if(dist >  this.ControllRadius * 0.5 && dist < this.ControllRadius) {
+                controll = this.steer(e, Game.mouse);
             }
-            controll.limit(this.MaxForce);
+            //controll.limit(e.MaxForce);
 
 
             separate.mul(this.SeparationWeight);
@@ -105,7 +103,7 @@
                     desired.mul(e.MaxSpeed);
 
                 var steer = desired.sub(e._vel);
-                steer.limit(this.MaxForce);
+                steer.limit(e.MaxForce);
             }
             else 
                 var steer = new Game.Vec(0,0);
@@ -123,10 +121,13 @@
         extend(e, {
             size: Bird.Size * (Math.random() + 1),
             vel: new Game.Vec(Math.random() * 2 - 1, Math.random() * 2 - 1),
-            MaxSpeed: Birds.MaxSpeed * (Math.random() + 1)
+            MaxSpeed: Birds.MaxSpeed * (Math.random() + 1),
+            MaxForce: Birds.MaxForce * (Math.random() + 1),
         }, args);
 
-        e.gfx = Game.defaultGfx(Bird.Color, e.size);
+        e.gfx = new PIXI.Sprite(Game.resources.bird.texture);
+        e.gfx.tint = 0xFF3333;
+
         e._pos = new Game.Vec(e.pos.x, e.pos.y);
         e._vel = new Game.Vec(e.vel.x, e.vel.y);
         Birds.add(e);

@@ -51,13 +51,14 @@
             var dX = Math.abs(this.x - other.x);
             var dY = Math.abs(this.y - other.y);
 
+            //return Math.sqrt(dX * dX + dY * dY);
+
             return Math.sqrt(
                 Math.min(dX, Game.Width - dX) * Math.min(dX, Game.Width - dX)
                 +
                 Math.min(dY, Game.Height - dY) * Math.min(dY, Game.Height - dY)
             );
 
-           //return Math.sqrt(dX * dX + dY * dY);
         },
 
         length: function() {

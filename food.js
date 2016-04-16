@@ -1,13 +1,14 @@
 (function() {
 
+
     var Food = function(args) {
         var e = new Game.Entity(args);
 
         extend(e, {
-            size: 10 * (Math.random() + 1)
+            size: 40 * (Math.random() + 1)
         }, args);
 
-        e.gfx = Game.defaultGfx(0xFFFFFF, e.size);
+        e.gfx = Game.defaultGfx(0xFFFFFF, e.size * 0.25);
         Game.Obstacles.add(e);
 
         return e;
