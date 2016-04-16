@@ -1,19 +1,4 @@
 (function() {
-    var random = function(min, max) {
-        return Math.random() * (max - min) + min;
-    };
-
-    var Obstacle = function(x, y) {
-        this.gfx = new PIXI.Graphics();
-        this.gfx.beginFill(0xFFFFFF);
-        this.gfx.drawCircle(0, 0, 30);
-        this.gfx.endFill();
-
-        this.pos = new Game.Vec(0,0);
-
-        this.pos.x = this.gfx.position.x = x;
-        this.pos.y = this.gfx.position.y = y;
-    };
 
     Game.Width = window.innerWidth;
     Game.Height = window.innerHeight;
@@ -25,41 +10,71 @@
         document.body.appendChild(this.renderer.view);
 
         this.stage = new PIXI.Container();
-        this.birds = [];
         this.mouse = new Game.Vec(100, 100);
 
-        for(var i = 0; i < 100; i++) this.addBird(random(100, this.Width - 100), random(100, this.Height - 100));
+        for(var i = 0; i < 20; i++) this.addEntity(this.Bird, {} );
 
-        this.addObject(Obstacle, random(100, this.Width - 100), random(100, this.Height - 100));
+        for(var i = 0; i < 50; i++) this.addEntity(this.Food, {} );
+
     };
 
-    Game.addObject = function(Obj, x, y) {
-        var obj = new Obj(x, y);
-        this.stage.addChild(obj.gfx);
-        return obj;
+    Game.addEntity = function(Obj, args) {
+        var e = Obj(args);
+        this.stage.addChild(e.gfx);
+        return e;
     };
 
-    Game.addBird = function(x, y) {
-        this.birds.push(this.addObject(this.Bird, x, y));
+
+    Game.update= function(dt) {
+
+        for(var s in this.systems) {
+            var system = this.systems[s];
+            if(system.step) for(var e in system.entities) {
+                var entity = system.entities[e];
+                if(!entity.removed)
+                    system.step(entity, dt);
+            }
+        }
+
+        for(var s in this.systems) {
+            var system = this.systems[s];
+            system.clean();
+        }
+
+        for(var e in this.removed) {
+            this.stage.removeChild(this.removed[e].gfx);
+        }
+        this.removed = [];
     };
 
-    Game.animate = function() {
+    Game.render = function() {
         this.renderer.render(this.stage);
-
-        
         this.mouse.x = this.renderer.plugins.interaction.mouse.global.x;
         this.mouse.y = this.renderer.plugins.interaction.mouse.global.y;
-
-        for(var b in this.birds) {
-            this.birds[b].step(this.birds, this.mouse);
-        }
     };
 
     Game.init();
+    var currentTime = Date.now();
+    var acc = 0;
+    var dT = 0.01;
+
     animate();
 
     function animate() {
-        Game.animate();
+        var newTime = Date.now();
+        var frameTime = (newTime - currentTime) / 1000;
+        if(frameTime > 0.25) frameTime = 0.25;
+        currentTime = newTime;
+    
+        acc += frameTime;
+
+        while(acc >= dT) {
+            Game.update(dT);
+            acc -= dT;
+        }
+
+        Game.render();
+
         requestAnimationFrame(animate);
     }
 

@@ -1,87 +1,111 @@
 (function() {
-    var Bird = function(x, y) {
-        this.size = Bird.Size * (Math.random() + 1)
-        {
-            this.gfx = new PIXI.Graphics();
-            this.gfx.beginFill(Bird.Color);
-            this.gfx.drawCircle(0,0, this.size);
-            this.gfx.endFill();
-        }
+    var Obstacles = new Game.System();
 
-        this.pos = new Game.Vec(0,0);
-        this.pos.x = this.gfx.position.x = x;
-        this.pos.y = this.gfx.position.y = y;
-        this.vel = new Game.Vec(Math.random() * 2 - 1, Math.random() * 2 - 1);
-    };
+    var Birds = new Game.System();
+    extend(Birds, {
+        SeparationWeight: 3,
+        AlignWeight: 1,
+        CohesionWeight: 1,
+        ControllWeight: 0.1,
 
-    Bird.Color = 0x0e74c3c;
-    Bird.Size = 5;
-    Bird.NeighbourRadius = 40;
-    Bird.MaxSpeed = 10;
-    Bird.MaxForce = 7;
-    Bird.CohesionWeight = 0.1;
-    Bird.DesiredSeparation = 3;
-    Bird.SeparationWeight = 10;
-    Bird.AlignWeight = 0.09;
-    Bird.ControllWeight = 0.04;
-    //Bird.ControllWeight = 0;
-    Bird.ControllRadius  =  Bird.NeighbourRadius * 10;
+        MaxSpeed: 2,
+        MaxForce: 0.5,
 
-    Bird.prototype = {
-        step: function(neighbours, mouse) {
-            var acc = this.flock(neighbours, mouse);
-            this.vel.add(acc).limit(Bird.MaxSpeed);
-            this.pos.add(this.vel).warp(Game.Width, Game.Height);
+        NeighbourRadius: 50,
+        ControllRadius:  2000,
+        DesiredSeparation: 10,
 
-            this.gfx.position.x = this.pos.x;
-            this.gfx.position.y = this.pos.y;
+        step: function( e ,dt ) {
+            var acc = this.flock( e );
+            acc.mul(dt * 100);
+            e.vel.add(acc);
+            e.vel.mul(dt * 100);
+            e.vel.limit(e.MaxSpeed);
+
+            e.pos.add(e.vel).warp(Game.Width, Game.Height);
+             
+            e._pos.x = e.pos.x;
+            e._pos.y = e.pos.y;
+            e._vel.x = e.vel.x;
+            e._vel.y = e.vel.y;
         },
 
-        flock: function(neighbours, mouse) {
-            var c = this.cohere(neighbours).mul(Bird.CohesionWeight);
-            var s = this.separate(neighbours).mul(Bird.SeparationWeight);
-            var a = this.align(neighbours).mul(Bird.AlignWeight);
-            var st = this.controll(mouse).mul(Bird.ControllWeight);
-            return s.add(a).add(c).add(st);
-        },
-
-        controll: function(mouse) { 
-            var dist = this.pos.dist(mouse);
-            if(dist > 0 && dist < Bird.ControllRadius)
-                return this.steer(mouse);
-            else return new Game.Vec(0, 0);
-        },
-
-        cohere: function(neighbours) {
-            var sum = new Game.Vec(0, 0);
+        flock: function(e) {
+            //--- Separate ---
+            var separate = new Game.Vec(0, 0);
             var count = 0;
-            for(var b in neighbours) {
-                var bird = neighbours[b];
-                var dist = this.pos.dist(bird.pos);
-                if(dist > 0 && dist < Bird.NeighbourRadius)  {
-                    sum.add(bird.pos);
+
+            for(var b in Obstacles.entities) {
+                var o = Obstacles.entities[b];
+                var dist = e._pos.dist(o._pos);
+                if(dist > 0 && dist < o.size + e.size + this.DesiredSeparation) {
+                    var v = new Game.Vec(e._pos.x, e._pos.y);
+                    v.sub(o._pos);
+                    v.normalize();
+                    v.div(dist);
+                    separate.add(v);
                     count++;
                 }
             }
-            
-            if(count > 0) return this.steer(sum.div(count));
-            else return sum;
-        },
 
-        steer: function(target) {
+            if(count > 0)
+                separate.div(count);
+            
+            //--- Cohere and align ---
+            var cohere = new Game.Vec(0, 0);
+            var align = new Game.Vec(0, 0);
+            count = 0;
+
+            for(var b in this.entities) {
+                var bird = this.entities[b];
+                var dist = e._pos.dist(bird._pos);
+
+                if(dist > 0 && dist < this.NeighbourRadius) {
+                    cohere.add(bird._pos);
+                    align.add(bird._vel);
+                    count++;
+                }
+            }
+
+            if(count > 0) {
+                cohere = this.steer(e, cohere.div(count));
+                align.div(count);
+            }
+            align.limit(this.MaxForce);
+
+            //--- Controll ---
+            var controll = new Game.Vec(0, 0);
+            var dist = e._pos.dist(Game.mouse);
+            if(dist > 0 && dist < this.ControllRadius) {
+                var d = new Game.Vec(Game.mouse.x, Game.mouse.y);
+                d.sub(e._pos);
+                d.normalize();
+                controll = d;
+            }
+            controll.limit(this.MaxForce);
+
+
+            separate.mul(this.SeparationWeight);
+            align.mul(this.AlignWeight);
+            cohere.mul(this.CohesionWeight);
+            controll.mul(this.ControllWeight);
+            return separate.add(align).add(cohere).add(controll);
+        },
+        
+        steer: function(e, target) {
             var desired = new Game.Vec(target.x, target.y);
-            desired.sub(this.pos);
+            desired.sub(e._pos);
             var l = desired.length();
             if(l > 0) {
                 desired.normalize();
 
                 if(l < 100)
-                    desired.mul(Bird.MaxSpeed * (l / 100));
+                    desired.mul(e.MaxSpeed * (l / 100));
                 else 
-                    desired.mul(Bird.MaxSpeed);
+                    desired.mul(e.MaxSpeed);
 
-                var steer = desired.sub(this.vel);
-                steer.limit(Bird.MaxForce);
+                var steer = desired.sub(e._vel);
+                steer.limit(this.MaxForce);
             }
             else 
                 var steer = new Game.Vec(0,0);
@@ -89,44 +113,33 @@
             return steer;
         },
 
-        separate: function(neighbours) {
-            var mean = new Game.Vec(0, 0);
-            var count = 0;
-            for(var b in neighbours) {
-                var bird = neighbours[b];
-                var dist = this.pos.dist(bird.pos);
+        
+    });
 
-                if(dist > 0 && dist < this.size * Bird.DesiredSeparation) {
-                    var v = new Game.Vec(this.pos.x, this.pos.y);
-                    v.sub(bird.pos);
-                    v.normalize();
-                    v.div(dist);
-                    mean.add(v);
-                    count ++;
-                }
-            }
 
-            //if(count > 0) mean.div(count);
-            return mean;
-        },
+    var Bird = function(args) {
+        var e = new Game.Entity(args);
 
-        align: function(neighbours) {
-            var mean = new Game.Vec(0, 0);
-            var count = 0;
-            for(var b in neighbours) {
-                var bird = neighbours[b];
-                var dist = this.pos.dist(bird.pos);
-                if(dist > 0 && dist < Bird.NeighbourRadius) {
-                    mean.add(bird.vel);
-                    count++;
-                }
-            }
+        extend(e, {
+            size: Bird.Size * (Math.random() + 1),
+            vel: new Game.Vec(Math.random() * 2 - 1, Math.random() * 2 - 1),
+            MaxSpeed: Birds.MaxSpeed * (Math.random() + 1)
+        }, args);
 
-            if(count > 0) mean.div(count);
-            mean.limit(Bird.MaxForce);
-            return mean;
-        }
+        e.gfx = Game.defaultGfx(Bird.Color, e.size);
+        e._pos = new Game.Vec(e.pos.x, e.pos.y);
+        e._vel = new Game.Vec(e.vel.x, e.vel.y);
+        Birds.add(e);
+        Obstacles.add(e);
+        return e;
     };
 
+    Bird.Color = 0x0e74c3c;
+    Bird.Size = 5;
+
+
     Game.Bird = Bird;
+    Game.Birds = Birds;
+    Game.Obstacles = Obstacles;
+    Game.systems.push(Birds);
 })();

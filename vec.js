@@ -56,6 +56,8 @@
                 +
                 Math.min(dY, Game.Height - dY) * Math.min(dY, Game.Height - dY)
             );
+
+           //return Math.sqrt(dX * dX + dY * dY);
         },
 
         length: function() {
@@ -64,8 +66,10 @@
 
         normalize: function() {
             var l = this.length();
-            this.x /= l;
-            this.y /= l;
+            if(l > 0) {
+                this.x /= l;
+                this.y /= l;
+            }
             return this;
         }
 
