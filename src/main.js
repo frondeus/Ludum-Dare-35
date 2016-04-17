@@ -72,6 +72,10 @@
 
         this.stage.addChild(this.edge);
 
+        Game.Food.preallocate();
+        Game.Tree.preallocate();
+        Game.Bird.preallocate();
+        Game.Bullet.preallocate();
 
         this.stage.addChild(Game.Food.gfx);
         this.stage.addChild(Game.Tree.gfx);
@@ -116,7 +120,7 @@
 
         this.levelTimerText.text = '' + Math.floor(this.levelTime += dT);
         if((this.levelTimer -= dT) <= 0) {
-            this.levelTimer = Math.random() * 10;
+            this.levelTimer = Math.random() * 2;
 
             var r = random(0, 100);
 
@@ -126,13 +130,13 @@
                     this.addChild(Game.Bird, { pos: Game.mouse.copy() } );
                 }
             }
-            else if(r <= 10  && Game.Tree.count < 15) {
+            else if(r <= 30  && Game.Tree.count < 45) {
                 this.levelText.text = "Trees are obstacles";
                 for(var i = 0; i < random(1, 20); i++) {
                     this.addChild(Game.Tree);
                 }
             }
-            else if(r <= 15 && Game.Food.count < 20) {
+            else if(r <= 65 && Game.Food.count < 20) {
                 this.levelText.text = "Dinner!";
                 for(var i = 0; i < random(1, 20); i++) {
                     this.addChild(Game.Food);
@@ -145,11 +149,16 @@
                 }
             }
             else {
-                r = random(0, 100);
-                if(r <= 20) this.levelText.text = "Don't surrender!";
-                else if(r <= 40) this.levelText.text = "Good job!";
-                else if(r <= 60) this.levelText.text = "Be a leader!";
-                else this.levelText.text = "Stay in circle!";
+                var texts = [
+                    "Don't surrender!",
+                    "Good job!",
+                    "Be a leader!",
+                    "Stay in circle!",
+                    "Use trees!",
+                    "Avoid bullets!",
+                    "Controll flock",
+                ];
+                this.levelText.text = texts[Math.floor(Math.random() * texts.length)];
             }
 
             this.birdCountText.text = "" + Game.Birds.entities.length-1;
@@ -176,8 +185,8 @@
     };
 
     var lerp = function(next, old, alpha) {
-        return next;
-        //return ( next * alpha ) + (old * (1.0 - alpha));
+        //return next;
+        return ( next * alpha ) + (old * (1.0 - alpha));
     };
 
     Game.render = function(alpha) {
@@ -205,7 +214,7 @@
                 en.factory.gfx.removeChild(en.gfx);
                 en.factory.queue.push(en);
                 en.factory.count--;
-                en.dirty = false;
+                en._dirty = false;
             }
         }
 
@@ -226,10 +235,10 @@
     window.onload = function() {
 
         PIXI.loader
-        .add('bird', 'bird.png')
-        .add('tree', 'tree.png')
-        .add('food', 'snail.png')
-        .add('bullets', 'bullets.png')
+        .add('bird', 'tileset_0.png')
+        .add('tree', 'tileset_1.png')
+        .add('food', 'tileset_3.png')
+        .add('bullets', 'tileset_2.png')
         .load(function(loader, resources) {
             Game.resources = resources;
             Game.init();

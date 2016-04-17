@@ -8,7 +8,7 @@
         
         e.gfx = new PIXI.Sprite(Game.resources.tree.texture);
         extend(e, {
-            Separate: 30
+            Separate: 30,
         });
 
         Game.Obstacles.add(e);

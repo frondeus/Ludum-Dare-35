@@ -6,7 +6,7 @@
     var dyn = 1;
 
     extend(Game.Birds, {
-        SeparationWeight: 2 * dyn,
+        SeparationWeight: 4 * dyn,
         AlignWeight: 0.5,
         CohesionWeight: 0.5,
         ControllWeight: 2,
@@ -39,11 +39,10 @@
                 var o = Game.Obstacles.entities[b];
                 if(o._dirty) continue;
                 var dist = e.old.pos.dist(o.old.pos);
-                if(dist > 0 && dist < ((o.old.size + e.old.size) + this.DesiredSeparation)) {
+                if(dist > 0 && dist < (o.old.size * o.Sepearate) + (e.Separate * e.old.size) + this.DesiredSeparation) {
                     var v = new Game.Vec(e.old.pos);
                     v.sub(o.old.pos);
                     v.normalize();
-                    v.mul(e.Separate + o.Separate);
                     v.div(dist);
                     separate.add(v);
                     count++;

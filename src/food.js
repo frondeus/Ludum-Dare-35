@@ -11,8 +11,10 @@
                 if(dist < 10) {
                     e.remove();
                     
-                    for(var i = 0; i < random(1, 5); i++) {
-                        var e = Game.addChild(Game.Bird, { pos: bird.old.pos.copy()  });
+                    if(Game.Bird.count < 95) {
+                        for(var i = 0; i < random(1, 5); i++) {
+                            var e = Game.addChild(Game.Bird, { pos: bird.old.pos.copy()  });
+                        }
                     }
 
                     return;

@@ -40,14 +40,19 @@
         });
         this.size = 16;
         this.count = 0;
+
     };
 
     Factory.prototype = {
+        preallocate: function() {
+            for(var i = 0; i < this.size; i++) this.queue.push(new Entity());
+        },
+
         create: function(args) {
             if(this.queue.length <= 0) {
-                for(var i = 0; i < this.size; i++)
-                this.queue.push(new Entity());
-                this.size *= this.size;
+                this.size *= 2;
+                console.log("Need to allocate: " + this.size);
+                for(var i = this.count; i < this.size; i++) this.queue.push(new Entity());
             }
 
             var e = this.queue.shift();
@@ -76,7 +81,6 @@
     var SimpleMovementSystem  = new System();
     SimpleMovementSystem.step = function(e, dT) { 
         if(e.old.pos.x < 0 || e.old.pos.x > Game.Width || e.old.pos.y < 0 || e.old.pos.y > Game.Height) {
-            console.log("Not in screeen");
             e.remove();
         }
     };
