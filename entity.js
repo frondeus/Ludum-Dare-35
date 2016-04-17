@@ -22,10 +22,24 @@
         }
     };
 
+    var State = function(){
+        this.pos = new Game.Vec(Game.Mid);
+        this.size = 30;
+        this.vel = new Game.Vec({x: 0, y: 0});
+        this.rot = 0;
+    };
+
+
     var Factory = function(Cons) {
         this.Cons = Cons;
         this.queue = [];
+        this.gfx = new PIXI.ParticleContainer(1500, {
+            scale: true,
+            rotation: true,
+            position: true
+        });
         this.size = 16;
+        this.count = 0;
     };
 
     Factory.prototype = {
@@ -37,19 +51,20 @@
             }
 
             var e = this.queue.shift();
+            e.state = new State();
+            e.old = new State();
             this.Cons(e, args);
             e.factory = this;
+            this.gfx.addChild(e.gfx);
+            this.count++;
+
+            e.old.pos = e.state.pos.copy();
+            e.old.size = e.state.size;
+            e.old.vel = e.state.vel.copy();
+            e.old.rot = e.state.rot;
             return e;
         }
     };
-
-    var State = function(){
-        this.pos = new Game.Vec(Game.Mid);
-        this.size = 30;
-        this.vel = new Game.Vec({x: 0, y: 0});
-        this.rot = 0;
-    };
-
     var defaultGfx = function() {
         var gfx = new PIXI.Graphics();
         gfx.beginFill(0xFFFFFF);
@@ -58,16 +73,23 @@
         return gfx;
     };
 
-    var Entity = function(Cons, args) {
+    var SimpleMovementSystem  = new System();
+    SimpleMovementSystem.step = function(e, dT) { 
+        if(e.old.pos.x < 0 || e.old.pos.x > Game.Width || e.old.pos.y < 0 || e.old.pos.y > Game.Height) {
+            console.log("Not in screeen");
+            e.remove();
+        }
+    };
+
+    var Entity = function(args) {
         extend(this, {
             state: new State(),
             old: new State(),
-            //gfx: defaultGfx(),
             gfx: new PIXI.Sprite(Game.resources.bird.texture),
             _dirty: false
         }, args);
 
-        //this.gfx.tint = 0xFFFFFF;
+        SimpleMovementSystem.add(this);
     };
 
     Entity.prototype.remove = function() {
@@ -78,7 +100,7 @@
     Game.State = State;
     Game.Entity = Entity;
     Game.Factory = Factory;
-    Game.systems = [];
+    Game.systems = [SimpleMovementSystem];
 
 
 })();

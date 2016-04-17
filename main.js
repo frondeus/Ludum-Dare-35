@@ -1,6 +1,6 @@
 (function() {
-    Game.Width = 800;
-    Game.Height = 600;
+    Game.Width = 1024;
+    Game.Height = 768;
     var asp = Game.Width/Game.Height;
 
     var setSize = function() {
@@ -17,8 +17,43 @@
 
     window.onresize = setSize;
 
+    Game.createUI = function() {
+    
+        //this.renderer.backgroundColor = 0xFF3333;
+      
+        this.birdCountText = new PIXI.Text('100', {
+            font: 'bold 48px Hack',
+            fill: 0xFF3333,
+            align: 'center'
+        });
+        this.birdCountText.anchor.set(0.5, 0.5);
+        this.birdCountText.position.x = 100;
+        this.birdCountText.position.y = 100;
+        this.stage.addChild(this.birdCountText);
+                            
+
+        this.levelTimerText = new PIXI.Text('100', {
+            font: 'bold 48px Hack',
+            fill: 0xFFFFFF,
+            align: 'center'
+        });
+        this.levelTimerText.anchor.set(0.5, 0.5);
+        this.levelTimerText.position.x = Game.Width - 100;
+        this.levelTimerText.position.y = 100;
+
+        this.levelText = new PIXI.Text("Stay in circle!", {
+            font: '24px Hack',
+            fill: 0xFFFFFF,
+            align: 'center'
+        });
+        this.levelText.anchor.set(0.5, 0.5);
+        this.levelText.position.x =Game.Mid.x;
+        this.levelText.position.y = 75;
+
+    };
+
     Game.init = function() {
-        this.renderer = new PIXI.WebGLRenderer(Game.Width, Game.Height);
+        this.renderer = new PIXI.WebGLRenderer(Game.Width, Game.Height, null, false, false);
         document.body.appendChild(this.renderer.view);
 
         this.stage = new PIXI.Container();
@@ -26,15 +61,7 @@
         this.entities = [];
 
         setSize();
-
-        this.particles = new PIXI.ParticleContainer(15000, {
-            scale: true,
-            rotation: true,
-            position: true
-        });
-
-        //this.renderer.backgroundColor = 0xFF3333;
-        this.edgeSize = 288;
+        this.edgeSize = Game.Mid.y - 25;
         this.edge = new PIXI.Graphics();
         this.edge.beginFill(0x000000);
         this.edge.lineStyle(2, 0xFF3333);
@@ -45,29 +72,92 @@
 
         this.stage.addChild(this.edge);
 
-        this.birdCountText = new PIXI.Text('100', {
-            font: '48px Hack Bold',
-            fill: 0xFF3333,
-            align: 'center'
-        });
-        this.birdCountText.anchor.set(0.5, 0.5);
-        this.birdCountText.position.x =Game.Mid.x;
-        this.birdCountText.position.y =Game.Mid.y;
-        this.stage.addChild(this.birdCountText);
-                            
 
+        this.stage.addChild(Game.Food.gfx);
+        this.stage.addChild(Game.Tree.gfx);
+        this.stage.addChild(Game.Bird.gfx);
+        this.stage.addChild(Game.Bullet.gfx);
 
-
-        this.stage.addChild(this.particles);
         for(var i = 0; i < 100; i++) {
-            var e = Game.Bird.create();
-            this.particles.addChild(e.gfx);
-            this.entities.push(e);
+            this.addChild(Game.Bird);
         }
 
+        for(var i = 0; i < random(1, 20); i++) {
+            this.addChild(Game.Tree);
+        }
+
+
+        this.levelTime = 0.0;
+        this.levelTimer = 5.0;
+
+        this.createUI();
+        this.stage.addChild(this.levelText);
+        this.stage.addChild(this.levelTimerText);
     };
 
+    Game.addChild = function(factory, args) {
+        var e = factory.create(args);
+        this.entities.push(e);
+        return e;
+    };
+
+    /*
+     *  TODO:
+     *  3. Hunters
+     *  3. Dźwięki
+     *  4. Tło
+     * */
+
     Game.update = function(dT) {
+        this.birdCountText.text = "" + Game.Birds.entities.length;
+        if(Game.Birds.entities.length <= 0) {
+            this.levelText.text = "Try again!";
+            return;
+        }
+
+        this.levelTimerText.text = '' + Math.floor(this.levelTime += dT);
+        if((this.levelTimer -= dT) <= 0) {
+            this.levelTimer = Math.random() * 10;
+
+            var r = random(0, 100);
+
+            if(r <= 5 && Game.Bird.count < 100) {
+                this.levelText.text = "Bigger flock!";
+                for(var i = 0; i < random(1, 20); i++) {
+                    this.addChild(Game.Bird, { pos: Game.mouse.copy() } );
+                }
+            }
+            else if(r <= 10  && Game.Tree.count < 15) {
+                this.levelText.text = "Trees are obstacles";
+                for(var i = 0; i < random(1, 20); i++) {
+                    this.addChild(Game.Tree);
+                }
+            }
+            else if(r <= 15 && Game.Food.count < 20) {
+                this.levelText.text = "Dinner!";
+                for(var i = 0; i < random(1, 20); i++) {
+                    this.addChild(Game.Food);
+                }
+            }
+            else if(r <= 80) {
+                this.levelText.text = "Hunters!";
+                for(var i = 0; i < random(10, 60); i++) {
+                    this.addChild(Game.Bullet, {});
+                }
+            }
+            else {
+                r = random(0, 100);
+                if(r <= 20) this.levelText.text = "Don't surrender!";
+                else if(r <= 40) this.levelText.text = "Good job!";
+                else if(r <= 60) this.levelText.text = "Be a leader!";
+                else this.levelText.text = "Stay in circle!";
+            }
+
+            this.birdCountText.text = "" + Game.Birds.entities.length-1;
+        }
+
+
+
         for(var s in this.systems) {
             var system = this.systems[s];
             if(system.step) for(var e in system.entities) {
@@ -76,14 +166,12 @@
             }
         }
 
-
         for(var b in Game.Birds.entities) {
             var bird = Game.Birds.entities[b];
             if(bird._dirty) continue;
             var dist = this.Mid.dist(bird.state.pos);
             if(dist > this.edgeSize) {
                 bird.remove();
-                this.birdCountText.text = "" + Game.Birds.entities.length-1;
             }
         }
     };
@@ -114,8 +202,10 @@
             en.old.rot = en.state.rot;
 
             if(en._dirty) {
-                this.particles.removeChild(en.gfx);
                 this.entities.splice(e, 1);
+                en.factory.gfx.removeChild(en.gfx);
+                en.factory.queue.push(en);
+                en.factory.count--;
                 en.dirty = false;
             }
         }
@@ -135,7 +225,12 @@
     var acc = 0;
     var dT = 0.01;
 
-    PIXI.loader.add('bird', 'bird.png').load(function(loader, resources) {
+    PIXI.loader
+    .add('bird', 'bird.png')
+    .add('tree', 'tree.png')
+    .add('food', 'snail.png')
+    .add('bullets', 'bullets.png')
+    .load(function(loader, resources) {
         Game.resources = resources;
         Game.init();
         animate();

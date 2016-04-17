@@ -9,7 +9,7 @@
 
     Vec.prototype = {
         copy: function() {
-            return new Vec(this);
+            return new Vec({x: this.x, y:this.y});
         },
 
         add: function(other) {
