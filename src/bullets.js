@@ -42,8 +42,7 @@
 
         }, args);
 
-        //e.state.vel = e.state.pos.copy().sub(Game.Mid);
-        e.state.vel = Game.Mid.copy().sub(e.state.pos).normalize().mul(Math.random() * 3 + 1);
+        e.state.vel = Game.Mid.copy().sub(e.state.pos).normalize().mul(Math.random() * 1 + 1);
         
 
         e.gfx = new PIXI.Sprite(Game.resources.bullets.texture);

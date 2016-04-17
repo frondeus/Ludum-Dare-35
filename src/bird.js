@@ -109,13 +109,12 @@
                 else 
                     desired.mul(e.MaxSpeed);
 
-                var steer = desired.sub(e.old.vel);
-                steer.limit(e.MaxForce);
+                var s = desired.sub(e.old.vel);
+                s.limit(e.MaxForce);
+                return s;
             }
             else 
-                var steer = new Game.Vec(0,0);
-
-            return steer;
+                return new Game.Vec(0,0);
         }
     });
 
@@ -123,6 +122,10 @@
         extend(e.state, {
             size: 5 * (Math.random() + 1),
             vel: new Game.Vec({ x: Math.random() * 2 -1, y: Math.random() * 2 - 1 } ),
+            pos: new Game.Vec( {
+                x: Game.Mid.x + Math.sin(Math.random() * 10) * 100,
+                y: Game.Mid.y + Math.cos(Math.random() * 10) * 100,
+            })
         }, args);
 
         extend(e, {
