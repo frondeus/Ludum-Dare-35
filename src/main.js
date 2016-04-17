@@ -220,21 +220,26 @@
     };
 
     //---- Loop ----
-
-    var currentTime = Date.now();
+    var currentTime = 0;
     var acc = 0;
     var dT = 0.01;
 
-    PIXI.loader
-    .add('bird', 'bird.png')
-    .add('tree', 'tree.png')
-    .add('food', 'snail.png')
-    .add('bullets', 'bullets.png')
-    .load(function(loader, resources) {
-        Game.resources = resources;
-        Game.init();
-        animate();
-    });
+    window.onload = function() {
+
+        PIXI.loader
+        .add('bird', 'bird.png')
+        .add('tree', 'tree.png')
+        .add('food', 'snail.png')
+        .add('bullets', 'bullets.png')
+        .load(function(loader, resources) {
+            Game.resources = resources;
+            Game.init();
+            Game.render(1.0);
+            currentTime = Date.now();
+                animate();
+        });
+
+    };
 
     function animate() {
         var newTime = Date.now();
