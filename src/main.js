@@ -1,6 +1,6 @@
 (function() {
-    Game.Width = 1024;
-    Game.Height = 768;
+    Game.Width = 1024 * 2;
+    Game.Height = 768 * 2;
     var asp = Game.Width/Game.Height;
 
     var setSize = function() {
@@ -103,7 +103,6 @@
 
     /*
      *  TODO:
-     *  3. Hunters
      *  3. Dźwięki
      *  4. Tło
      * */
@@ -141,7 +140,7 @@
             }
             else if(r <= 80) {
                 this.levelText.text = "Hunters!";
-                for(var i = 0; i < random(10, 60); i++) {
+                for(var i = 0; i < random(4, 25); i++) {
                     this.addChild(Game.Bullet, {});
                 }
             }
@@ -177,8 +176,8 @@
     };
 
     var lerp = function(next, old, alpha) {
-        var n = next * alpha + (1.0 - alpha) * old;
-        return n;
+        return next;
+        //return ( next * alpha ) + (old * (1.0 - alpha));
     };
 
     Game.render = function(alpha) {
@@ -215,8 +214,8 @@
         this.mouse.x = this.renderer.plugins.interaction.mouse.global.x / this.stage.scale.x;
         this.mouse.y = this.renderer.plugins.interaction.mouse.global.y / this.stage.scale.y;
 
-        //this.mouse.x = 400;
-        //this.mouse.y = 300;
+        //this.mouse.x = this.Mid.x;
+        //this.mouse.y = this.Mid.y;
     };
 
     //---- Loop ----
