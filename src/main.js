@@ -80,6 +80,7 @@
 
     window.onload = function() {
         PIXI.loader
+        .add('background', 'bg.png')
         .add('bird', 'tileset_0.png')
         .add('tree', 'tileset_1.png')
         .add('food', 'tileset_3.png')

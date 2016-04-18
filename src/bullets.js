@@ -3,22 +3,15 @@
     
     extend(Game.Bullets, {
         step: function(en, dt) {
-            for(var b in Game.Birds.ent) {
-                var bird = Game.Birds.ent[b];
-                if(bird._dirty) continue;
-                var dist = bird.old.pos.dist(en.old.pos);
-                if(dist > 0 && dist < 5) {
-                    bird.remove();
-                }
-            }
 
             for(var o in Game.Obstacles.ent) {
                 var ob = Game.Obstacles.ent[o];
 
                 if(ob._dirty) continue;
                 var dist = ob.old.pos.dist(en.old.pos);
-                if(dist > 0 && dist < 5) {
+                if(dist > 0 && dist < 20) {
                     en.remove();
+                    ob.remove();
                 }
             }
 

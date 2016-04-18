@@ -36,10 +36,8 @@
     Game.createEdge = function() {
         this.edgeSize = Game.Mid.y - 25;
         this.edge = new PIXI.Graphics();
-        this.edge.beginFill(0x000000);
         this.edge.lineStyle(2, 0xFF3333);
         this.edge.drawCircle(0, 0, this.edgeSize);
-        this.edge.endFill();
         this.edge.position.x = Game.Mid.x;
         this.edge.position.y = Game.Mid.y;
 
@@ -47,12 +45,48 @@
     };
 
     Game.createWorld = function() {
+        this.bg = new PIXI.Sprite(this.resources.background.texture);
+        this.bg.scale.x = 2;
+        this.bg.scale.y = 2;
+        this.stage.addChild(this.bg);
         this.createEdge();
 
         Game.Food.init();
         Game.Tree.init();
         Game.Bird.init();
         Game.Bullet.init();
+
+
+        Game.music = new Howl( {
+            urls: ['music.wav'],
+            loop: true,
+            volume: 0.033
+        });
+
+        Game.flap = Game.loadSounds('flap.wav');
+        Game.kra = Game.loadSounds('kra.wav');
+        Game.bzz = Game.loadSounds('bzz.wav');
+        Game.shoot = Game.loadSounds('shoot.wav');
+        
+        this.music.play();
+    };
+
+    Game.playSound = function(name) {
+        Game[name][Math.floor(Math.random() * Game[name].length)].play();
+    };
+
+    Game.loadSounds = function(name) {
+        var arr = [];
+        for(var i = 0; i < 10; i++) arr.push(Game.loadSound(name));
+        return arr;
+    };
+
+    Game.loadSound = function(name) {
+        return new Howl({
+            urls: [name],
+            volume: 0.04,
+            rate: Math.random() * 2
+        });
     };
 
     Game.spawnWorld = function() {
@@ -73,6 +107,7 @@
         this.birdCountText.text = "" + Game.Bird.count;
         if(Game.Bird.count <= 0) {
             this.levelText.text = "Try again!";
+            this.music.volume(0.005);
             return;
         }
 
@@ -84,23 +119,27 @@
 
             if(r <= 5 && Game.Bird.count < 100) {
                 this.levelText.text = "Bigger flock!";
+                this.playSound("flap");
                 for(var i = 0; i < random(1, 20); i++) {
                     this.spawn(Game.Bird, { pos: Game.mouse.copy() } );
                 }
             }
             else if(r <= 30  && Game.Tree.count < 45) {
+                this.playSound("kra");
                 this.levelText.text = "Trees are obstacles";
                 for(var i = 0; i < random(1, 20); i++) {
                     this.spawn(Game.Tree);
                 }
             }
             else if(r <= 65 && Game.Food.count < 20) {
+                this.playSound("bzz");
                 this.levelText.text = "Dinner!";
-                for(var i = 0; i < random(1, 20); i++) {
+                for(var i = 0; i < random(1, 5); i++) {
                     this.spawn(Game.Food);
                 }
             }
             else if(r <= 80) {
+                this.playSound("shoot");
                 this.levelText.text = "Hunters!";
                 for(var i = 0; i < random(4, 25); i++) {
                     this.spawn(Game.Bullet, {});
@@ -115,6 +154,8 @@
                     "Use trees!",
                     "Avoid bullets!",
                     "Controll flock",
+                    "Don't panic!",
+                    "Ludum Dare 35"
                 ];
                 this.levelText.text = texts[Math.floor(Math.random() * texts.length)];
             }

@@ -11,7 +11,7 @@
                     en.remove();
                     
                     if(Game.Bird.count < 95) {
-                        for(var i = 0; i < random(1, 5); i++) {
+                        for(var i = 0; i < random(1, 2); i++) {
                             var e = Game.spawn(Game.Bird, { pos: bird.old.pos.copy()  });
                         }
                     }
