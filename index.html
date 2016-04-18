@@ -40,6 +40,10 @@
                 return Math.random() * (max - min) + min;
             };
 
+            window.lerp = function(old, next, alpha) {
+                return (old * (1.0 - alpha)) + (next * alpha);
+            };
+
             var Game = {}; 
         </script>
 
@@ -51,6 +55,7 @@
         <script src="src/food.js" type="text/javascript" charset="utf-8"></script>
         <script src="src/bullets.js" type="text/javascript" charset="utf-8"></script>
 
+        <script src="src/game.js" type="text/javascript" charset="utf-8"></script>
         <script src="src/main.js" type="text/javascript" charset="utf-8"></script>
     </body>
 </html>

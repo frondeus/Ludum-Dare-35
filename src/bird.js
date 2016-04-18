@@ -3,102 +3,105 @@
 
     Game.Birds = new Game.System();
 
-    var dyn = 1;
-
     extend(Game.Birds, {
-        SeparationWeight: 4 * dyn,
-        AlignWeight: 0.5,
-        CohesionWeight: 0.5,
-        ControllWeight: 2,
+        SeparationWeight: 2,
+        AlignWeight: 1,
+        CohesionWeight: 1,
+        ControllWeight: 1,
 
-        MaxSpeed: 2 * dyn,
-        MaxForce: 0.03 * dyn,
+        MaxSpeed: 2,
+        MaxForce: 0.01,
 
-        NeighbourRadius: 50,
+        NeighbourRadius: 30,
         ControllRadius: 60,
         DesiredSeparation: 20,
 
-        step: function(e, dT) {
-            var acc = this.flock(e).div(this.SeparationWeight + this.AlignWeight + this.CohesionWeight + this.CohesionWeight);
-            acc.mul(100).mul(dT);
-            
-            e.state.vel.add(acc).mul(100).mul(dT).limit(e.MaxSpeed);
+        separate: new Game.Vec(),
+        cohere: new Game.Vec(),
+        align: new Game.Vec(),
+        controll: new Game.Vec(),
 
-            e.state.rot = Math.atan2(e.state.vel.y, e.state.vel.x);
+        step: function(en, dT) {
+            var acc = this.flock(en).div(
+                this.SeparationWeight + 
+                this.AlignWeight + 
+                this.CohesionWeight +
+                this.ControllWeight
+            ).mul(100).mul(dT);
 
-            e.state.pos.add(e.state.vel);
-
+            en.state.vel.add(acc).limit(en.MaxSpeed);
         },
 
-        flock: function(e) {
+        flock: function(en) {
             //--- Separate ---
-            var separate = new Game.Vec();
+            this.separate.zero();
             var count = 0;
 
-            for(var b in Game.Obstacles.entities) {
-                var o = Game.Obstacles.entities[b];
+            for(var b in Game.Obstacles.ent) {
+                var o = Game.Obstacles.ent[b];
                 if(o._dirty) continue;
-                var dist = e.old.pos.dist(o.old.pos);
-                if(dist > 0 && dist < (o.old.size * o.Sepearate) + (e.Separate * e.old.size) + this.DesiredSeparation) {
+                var dist = en.old.pos.dist(o.old.pos);
+                if(dist > 0 && dist < (o.old.size * o.Sepearate) + (en.Separate * en.old.size) + this.DesiredSeparation) {
                     var v = new Game.Vec(e.old.pos);
                     v.sub(o.old.pos);
                     v.normalize();
                     v.div(dist);
-                    separate.add(v);
+                    this.separate.add(v);
                     count++;
                 }
             }
 
             if(count > 0)
-                separate.div(count);
+                this.separate.div(count);
 
             //--- Cohere and align ---
-            var cohere = new Game.Vec();
-            var align = new Game.Vec();
+            this.cohere.zero();
+            this.align.zero();
             count = 0;
 
-            for(var b in this.entities) {
-                var bird = this.entities[b];
+            for(var b in this.ent) {
+                var bird = this.ent[b];
                 if(bird._dirty) continue;
-                var dist = e.old.pos.dist(bird.old.pos);
+                var dist = en.old.pos.dist(bird.old.pos);
 
                 if(dist > 0 && dist < this.NeighbourRadius) {
-                    cohere.add(bird.old.pos);
-                    align.add(bird.old.vel);
+                    this.cohere.add(bird.old.pos);
+                    this.align.add(bird.old.vel);
                     count++;
                 }
             }
 
             if(count > 0) {
-                cohere = this.steer(e, cohere.div(count));
-                align.div(count);
+                this.cohere = this.steer(en, this.cohere.div(count));
+                this.align.div(count);
             }
-            align.limit(e.MaxForce);
+            //else this.cohere = en.old.pos.copy();
+            this.align.limit(en.MaxForce);
 
 
             //--- Controll ---
-            var controll = new Game.Vec();
-            var dist = e.old.pos.dist(Game.mouse);
+            var dist = en.old.pos.dist(Game.mouse);
             if(dist > this.ControllRadius) {
-                var m = new Game.Vec({
-                    x: Game.mouse.x + Math.random() * 200 - 100,
-                    y: Game.mouse.y + Math.random() * 200 - 100
-                });
-                m.sub(e.old.pos);
-                m.mul(10);
-                m.div(dist * dist);
-                controll = m;
+                this.controll.set(
+                    Game.mouse.x + Math.random() * 200 - 100,
+                    Game.mouse.y + Math.random() * 200 - 100
+                );
+                this.controll.sub(en.old.pos);
+                this.controll.mul(30);
+                this.controll.div(dist * dist);
+                this.controll.limit(10 * en.MaxForce);
             }
 
 
-            separate.mul(this.SeparationWeight);
-            align.mul(this.AlignWeight);
-            cohere.mul(this.CohesionWeight);
-            controll.mul(this.ControllWeight);
-            return separate
-                    .add(align)
-                    .add(cohere)
-                    .add(controll);
+            this.separate.mul(this.SeparationWeight);
+            this.align.mul(this.AlignWeight);
+            this.cohere.mul(this.CohesionWeight);
+            this.controll.mul(this.ControllWeight);
+            return this.separate
+            .add(this.align)
+            .add(this.cohere)
+            .add(this.controll);
+
         },
 
         steer: function(e, target) {
@@ -108,42 +111,41 @@
             if(l > 0) {
                 desired.normalize();
 
-                if(l < 100)
-                    desired.mul(e.MaxSpeed * (l / 100));
-                else 
-                    desired.mul(e.MaxSpeed);
+                if(l < 100) desired.mul(e.MaxSpeed * (l / 100));
+                else desired.mul(e.MaxSpeed);
 
                 var s = desired.sub(e.old.vel);
                 s.limit(e.MaxForce);
                 return s;
             }
-            else 
-                return new Game.Vec(0,0);
+            else return new Game.Vec(0,0);
         }
+
     });
 
-    Game.Bird = new Game.Factory(function(e, args) {
-        extend(e.state, {
+    Game.Bird = new Game.Factory(function(en) {
+
+        extend(en, {
+            MaxSpeed: Game.Birds.MaxSpeed * (Math.random() + 1),
+            MaxForce: Game.Birds.MaxForce * (Math.random() + 1),
+            Separate: 1
+        });
+
+        Game.Birds.add(en);
+        Game.Obstacles.add(en);
+        return en;
+
+    }, function(en, args) {
+
+        extend(en.state, {
             size: 5 * (Math.random() + 1),
             vel: new Game.Vec({ x: Math.random() * 2 -1, y: Math.random() * 2 - 1 } ),
             pos: new Game.Vec( {
                 x: Game.Mid.x + Math.sin(Math.random() * 10) * 100,
                 y: Game.Mid.y + Math.cos(Math.random() * 10) * 100,
             })
-        }, args);
-
-        extend(e, {
-            MaxSpeed: Game.Birds.MaxSpeed * (Math.random() + 1),
-            MaxForce: Game.Birds.MaxForce * (Math.random() + 1),
-            Separate: 1
-        });
-
-        //e.gfx.tint = 0xFF3333;
-        Game.Birds.add(e);
-        Game.Obstacles.add(e);
-
-        return e;
+        },args);
+        return en;
     });
 
-    Game.systems.push(Game.Birds);
 })();

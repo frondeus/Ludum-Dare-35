@@ -8,6 +8,15 @@
     };
 
     Vec.prototype = {
+        zero: function() {
+            this.x = this.y = 0;
+        },
+
+        set: function(x, y) {
+            this.x = x;
+            this.y = y;
+        },
+
         copy: function() {
             return new Vec({x: this.x, y:this.y});
         },
